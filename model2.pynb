@@ -1,0 +1,94 @@
+#Import all the libraries
+import os
+import numpy as np
+import pathlib
+
+from skimage.io import imread
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score, classification_report
+from sklearn.decomposition import PCA
+# Define the path to the directory containing the image folders
+data_dir = pathlib.Path('./images/').with_suffix('')
+
+Categories = ['Broken soybeans', 'Immature soybeans', 'Intact soybeans', 'Skin-damaged soybeans', 'Spotted soybeans']
+image_data = []  # List to store flattened image vectors
+labels = []  # List to store category labels
+
+
+for category in Categories:
+    print(f'Loading category: {category}')
+    path = os.path.join(data_dir, category)
+    
+    # Loop through each image in the category folder
+    for img_filename in os.listdir(path):
+        img_path = os.path.join(path, img_filename)
+        
+        # Read the image using scikit-image
+        img = imread(img_path)
+        
+        # Flatten the image and add it to the data
+        image_data.append(img.flatten())
+        
+        # Add the label (category) to the labels list
+        labels.append(category)
+
+image_data = np.array(image_data)
+label_encoder = LabelEncoder()
+encoded_labels = label_encoder.fit_transform(labels)
+
+n_components = 1  # Adjust this number as needed
+pca = PCA(n_components=n_components, random_state=42)
+image_data_pca = pca.fit_transform(image_data)
+# Split the PCA-transformed data into training and testing sets
+X_train_pca, X_test_pca, y_train, y_test = train_test_split(image_data_pca, encoded_labels, test_size=0.2, random_state=42)
+
+# Create an SVM model with a linear kernel (you can choose other kernels)
+svm_model = SVC(kernel='linear', random_state=42)
+
+# Train the SVM model on the PCA-transformed training data
+svm_model.fit(X_train_pca, y_train)
+
+# Evaluate the svm_model on the PCA-transformed testing data
+y_pred_pca = svm_model.predict(X_test_pca)
+accuracy_pca = accuracy_score(y_test, y_pred_pca)
+report_pca = classification_report(y_test, y_pred_pca)
+
+# Print accuracy and classification report
+print(f'Accuracy with PCA: {accuracy_pca}')
+print(f'Classification Report with PCA:\n{report_pca}')
+X_train, X_test, y_train, y_test = train_test_split(image_data, encoded_labels, test_size=0.2, random_state=42)
+# Create an SVM model with a linear kernel (you can choose other kernels)
+svm_model = SVC(kernel='linear', random_state=42)
+svm_model2 = SVC(kernel='rbf', random_state=42)
+svm_model3 = SVC(kernel='poly', random_state=42)
+
+svm_model.fit(X_train, y_train)
+svm_model2.fit(X_train, y_train)
+svm_model3.fit(X_train, y_train)
+# Evaluate svm_model
+y_pred1 = svm_model.predict(X_test)
+accuracy1 = accuracy_score(y_test, y_pred1)
+report1 = classification_report(y_test, y_pred1)
+
+# Evaluate svm_model2
+y_pred2 = svm_model2.predict(X_test)
+accuracy2 = accuracy_score(y_test, y_pred2)
+report2 = classification_report(y_test, y_pred2)
+
+# Evaluate svm_model3
+y_pred3 = svm_model3.predict(X_test)
+accuracy3 = accuracy_score(y_test, y_pred3)
+report3 = classification_report(y_test, y_pred3)
+
+# Print accuracy and classification reports for comparison
+print("Accuracy (Linear Kernel):", accuracy1)
+print("Classification Report (Linear Kernel):\n", report1)
+
+# Print accuracy and classification reports for other kernels
+print("Accuracy (Exponential Kernel):", accuracy2)
+print("Classification Report (Exponential Kernel):\n", report2)
+
+print("Accuracy (Poly Kernel):", accuracy3)
+print("Classification Report (Poly Kernel):\n", report3)
